@@ -10,6 +10,8 @@ const products = [
       "Natural amla hair oil for strong, healthy hair with traditional Ayurvedic formula.",
     image: "images/img1.jpg",
     specifications: "200ml, Natural ingredients, No chemicals",
+    brand: "Dabur",
+    category: "Hair Oil",
   },
   {
     id: 2,
@@ -19,6 +21,8 @@ const products = [
       "Pure almond oil enriched with vitamins for hair growth and scalp nourishment.",
     image: "images/img2.jpg",
     specifications: "100ml, Pure almond extract, Vitamin E enriched",
+    brand: "Bajaj",
+    category: "Hair Oil",
   },
   {
     id: 3,
@@ -28,6 +32,8 @@ const products = [
       "Pure coconut oil for deep hair conditioning and natural hair care.",
     image: "images/img3.jpg",
     specifications: "300ml, 100% pure coconut oil, Cold pressed",
+    brand: "Parachute",
+    category: "Hair Oil",
   },
   {
     id: 4,
@@ -37,6 +43,8 @@ const products = [
       "Herbal hair oil with natural ingredients for hair fall control and growth.",
     image: "images/img4.jpg",
     specifications: "150ml, Herbal formula, Ayurvedic ingredients",
+    brand: "Himalaya",
+    category: "Hair Oil",
   },
   {
     id: 5,
@@ -46,6 +54,8 @@ const products = [
       "Organic hair oil with natural herbs for hair strengthening and shine.",
     image: "images/img5.jpg",
     specifications: "100ml, Organic certified, Natural herbs",
+    brand: "Khadi",
+    category: "Hair Oil",
   },
   {
     id: 6,
@@ -55,6 +65,8 @@ const products = [
       "Ayurvedic hair oil with bringharaj for hair growth and scalp health.",
     image: "images/img6.jpg",
     specifications: "100ml, Ayurvedic formula, Bringharaj extract",
+    brand: "Indulekha",
+    category: "Hair Oil",
   },
   {
     id: 7,
@@ -64,6 +76,8 @@ const products = [
       "Organic hair oil with natural herbs for hair strengthening and shine.",
     image: "images/img2.jpg",
     specifications: "100ml, Organic certified, Natural herbs",
+    brand: "Khadi",
+    category: "Hair Oil",
   },
   {
     id: 8,
@@ -73,6 +87,8 @@ const products = [
       "Ayurvedic hair oil with bringharaj for hair growth and scalp health.",
     image: "images/img1.jpg",
     specifications: "100ml, Ayurvedic formula, Bringharaj extract",
+    brand: "Indulekha",
+    category: "Hair Oil",
   },
 ];
 
@@ -99,8 +115,7 @@ function loadSavedData() {
       updateCartCount();
     }
   } catch (error) {
-    console.error("Failed to load saved data:", error);
-    cartItems.clear();
+    console.error("Error loading saved data:", error);
   }
 }
 
@@ -111,95 +126,19 @@ function saveData() {
       JSON.stringify(Array.from(cartItems.entries()))
     );
   } catch (error) {
-    console.error("Failed to save data:", error);
+    console.error("Error saving data:", error);
   }
 }
 
 /* =========================================================
-     Cart Management
+     Cart Count Update
   ========================================================= */
 function updateCartCount() {
-  const cartCount = Array.from(cartItems.values()).reduce(
-    (total, qty) => total + qty,
+  const totalItems = Array.from(cartItems.values()).reduce(
+    (sum, quantity) => sum + quantity,
     0
   );
-  $("#cartCount").text(cartCount);
-  $(".cart-total-count").text(cartCount);
-  updateCartModal();
-}
-
-function updateCartModal() {
-  const cartItemsList = $("#cartItemsList");
-  const cartTotalPrice = $(".cart-total-price");
-
-  if (cartItems.size === 0) {
-    cartItemsList.html(
-      '<div class="text-center py-5 text-muted"><h6>Your cart is empty</h6><p>Add some products to get started!</p></div>'
-    );
-    cartTotalPrice.text("₹0");
-    return;
-  }
-
-  let totalPrice = 0;
-
-  const cartHTML = Array.from(cartItems.entries())
-    .map(([productId, quantity]) => {
-      const product = products.find((p) => p.id === productId);
-      if (!product) return "";
-
-      const itemTotal = product.price * quantity;
-      totalPrice += itemTotal;
-
-      return `
-          <div class="cart-item d-flex align-items-center p-3 border-bottom">
-  <div class="cart-item-image me-3">
-    <img src="${product.image}" alt="${product.name}" 
-         class="rounded bg-light" 
-         style="width: 100px; height: 100px; object-fit: cover;">
-  </div>
-  <div class="cart-item-details flex-grow-1">
-    <div class="cart-item-name fw-bold mb-1">${product.name}</div>
-    <div class="cart-item-price text-muted mb-1">₹${
-      product.price
-    } × ${quantity}</div>
-    <div class="cart-item-total fw-bold text-primary">₹${itemTotal.toFixed(
-      2
-    )}</div>
-  </div>
-  <div class="cart-item-actions">
-    <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${
-      product.id
-    })" title="Remove item">
-      ❌ Remove
-    </button>
-  </div>
-</div>
-
-        `;
-    })
-    .join("");
-
-  cartItemsList.html(cartHTML);
-  cartTotalPrice.text(`₹${totalPrice.toFixed(2)}`);
-}
-
-function openCartModal() {
-  updateCartModal();
-  const cartModal = new bootstrap.Modal(document.getElementById("cartModal"));
-  cartModal.show();
-}
-
-function clearCart() {
-  cartItems.clear();
-  updateCartCount();
-  displayProducts(filteredProducts);
-  saveData();
-  showToast("Cart cleared successfully!", "success");
-
-  const cartModal = bootstrap.Modal.getInstance(
-    document.getElementById("cartModal")
-  );
-  if (cartModal) cartModal.hide();
+  $("#cartCount").text(totalItems);
 }
 
 /* =========================================================
@@ -351,6 +290,97 @@ function showToast(message, type = "success") {
 }
 
 /* =========================================================
+     Footer Functionality
+  ========================================================= */
+
+// Newsletter subscription
+function setupNewsletterForm() {
+  $("#newsletterForm").on("submit", function (e) {
+    e.preventDefault();
+
+    const email = $("#newsletterEmail").val().trim();
+
+    if (!email) {
+      showToast("Please enter a valid email address", "error");
+      return;
+    }
+
+    // Simulate newsletter subscription
+    showToast("Thank you for subscribing to our newsletter!", "success");
+    $("#newsletterEmail").val("");
+
+    // You can add AJAX call here to actually subscribe the user
+    console.log("Newsletter subscription for:", email);
+  });
+}
+
+// Back to top functionality
+function setupBackToTop() {
+  const backToTopBtn = $("#backToTop");
+
+  // Show/hide button based on scroll position
+  $(window).on("scroll", function () {
+    if ($(this).scrollTop() > 300) {
+      backToTopBtn.addClass("show");
+    } else {
+      backToTopBtn.removeClass("show");
+    }
+  });
+
+  // Smooth scroll to top when clicked
+  backToTopBtn.on("click", function () {
+    $("html, body").animate(
+      {
+        scrollTop: 0,
+      },
+      800
+    );
+  });
+}
+
+// Smooth scroll for footer links
+function setupFooterLinks() {
+  $('.footer-link[href^="#"]').on("click", function (e) {
+    e.preventDefault();
+
+    const target = $(this.getAttribute("href"));
+    if (target.length) {
+      $("html, body").animate(
+        {
+          scrollTop: target.offset().top - 80,
+        },
+        800
+      );
+    }
+  });
+}
+
+// Footer animations on scroll
+function setupFooterAnimations() {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: "0px 0px -50px 0px",
+  };
+
+  const observer = new IntersectionObserver(function (entries) {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = "1";
+        entry.target.style.transform = "translateY(0)";
+      }
+    });
+  }, observerOptions);
+
+  // Observe footer widgets for animation
+  $(".footer-widget").each(function () {
+    this.style.opacity = "0";
+    this.style.transform = "translateY(30px)";
+    this.style.transition = "all 0.6s ease";
+    observer.observe(this);
+  });
+}
+
+/* =========================================================
      Event Listeners
   ========================================================= */
 function setupEventListeners() {
@@ -363,6 +393,82 @@ function setupEventListeners() {
   $("#productsGrid").on("click", ".remove-from-cart", function () {
     removeFromCart(parseInt($(this).data("product-id")));
   });
+
+  // Footer event listeners
+  setupNewsletterForm();
+  setupBackToTop();
+  setupFooterLinks();
+  setupFooterAnimations();
+}
+
+/* =========================================================
+     Cart Modal Functions
+  ========================================================= */
+function openCartModal() {
+  const modal = new bootstrap.Modal(document.getElementById("cartModal"));
+  modal.show();
+  displayCartItems();
+}
+
+function displayCartItems() {
+  const cartItemsList = $("#cartItemsList");
+
+  if (cartItems.size === 0) {
+    cartItemsList.html(`
+      <div class="text-center py-4">
+        <p class="text-muted">Your cart is empty</p>
+      </div>
+    `);
+    return;
+  }
+
+  let cartHTML = "";
+  let totalPrice = 0;
+
+  cartItems.forEach((quantity, productId) => {
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      const itemTotal = product.price * quantity;
+      totalPrice += itemTotal;
+
+      cartHTML += `
+        <div class="cart-item d-flex align-items-center">
+          <div class="cart-item-image me-3">
+            <img src="${product.image}" alt="${product.name}" 
+                 class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+          </div>
+          <div class="cart-item-details flex-grow-1">
+            <div class="cart-item-name">${product.name}</div>
+            <div class="cart-item-price">₹${product.price} × ${quantity}</div>
+          </div>
+          <div class="cart-item-total me-3">₹${itemTotal}</div>
+          <div class="cart-item-actions">
+            <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${productId})">
+              Remove
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  cartItemsList.html(cartHTML);
+  $(".cart-total-price").text(`₹${totalPrice}`);
+  $(".cart-total-count").text(cartItems.size);
+}
+
+function clearCart() {
+  cartItems.clear();
+  updateCartCount();
+  displayProducts(filteredProducts);
+  saveData();
+  showToast("Cart cleared successfully!", "success");
+
+  // Close modal
+  const modal = bootstrap.Modal.getInstance(
+    document.getElementById("cartModal")
+  );
+  if (modal) modal.hide();
 }
 
 /* =========================================================
