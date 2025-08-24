@@ -14,20 +14,19 @@
     <link rel="stylesheet" href="css/style.css" />
     <!-- Toastify CSS -->
     <link
-      rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+      rel="stylesheet"
     />
   </head>
   <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg">
       <div class="container">
         <!-- Brand -->
         <a class="navbar-brand d-flex align-items-center" href="#">
           <span class="me-3 fs-2">🌿</span>
           <div>
-            <div class="fw-bold text-dark">HairCare</div>
-
+            <div class="fw-bold">HairCare</div>
             <small class="text-muted">Natural Beauty</small>
           </div>
         </a>
@@ -55,13 +54,12 @@
 
           <!-- Cart Trigger -->
           <div
-            class="d-flex align-items-center cursor-pointer"
+            class="d-flex align-items-center cursor-pointer cart-trigger"
             role="button"
             onclick="openCartModal()"
           >
             <span class="me-2">🛒</span>
-            <span class="badge bg-primary" id="cartCount">0</span>
-            <span class="ms-2">Cart</span>
+            <span class="badge bg-danger text-white" id="cartCount">0</span>
           </div>
         </div>
       </div>
@@ -96,8 +94,8 @@
     >
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">
+          <div class="modal-header text-white">
+            <h5 class="modal-title fw-bold">
               🛒 Shopping Cart (<span class="cart-total-count">0</span>)
             </h5>
             <button
@@ -115,14 +113,17 @@
           <div
             class="modal-footer d-flex justify-content-between align-items-center"
           >
-            <strong class="fs-5">
-              Total: <span class="cart-total-price text-primary">₹0</span>
+            <strong class="fs-5 fw-bold">
+              Total: <span class="cart-total-price">₹0</span>
             </strong>
             <div>
-              <button class="btn btn-outline-danger me-2" onclick="clearCart()">
+              <button
+                class="btn btn-outline-secondary me-2"
+                onclick="clearCart()"
+              >
                 Clear Cart
               </button>
-              <button class="btn btn-primary">Checkout</button>
+              <button class="btn btn-dark">Checkout</button>
             </div>
           </div>
         </div>
@@ -130,7 +131,6 @@
     </div>
 
     <!-- Scripts -->
-
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>

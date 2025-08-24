@@ -254,8 +254,8 @@ function displayProducts(productsToShow) {
                 <div class="product-actions mt-auto">
                   ${
                     isInCart
-                      ? `<button class="btn btn-danger btn-sm w-100 remove-from-cart" data-product-id="${product.id}">❌ Remove from Cart</button>`
-                      : `<button class="btn btn-primary btn-sm w-100 add-to-cart" data-product-id="${product.id}">🛒 Add to Cart</button>`
+                      ? `<button class="btn btn-primary btn-sm w-100 remove-from-cart added" data-product-id="${product.id}">Remove from Cart</button>`
+                      : `<button class="btn btn-primary btn-sm w-100 add-to-cart" data-product-id="${product.id}">Add to Cart</button>`
                   }
                 </div>
               </div>
