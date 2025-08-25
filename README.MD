@@ -2,23 +2,36 @@
 
 A modern, responsive product catalog website built with HTML5, CSS3, and JavaScript.
 
-## 📋 Features
+✨ Features
 
-- ✅ Responsive Navigation Bar with Mobile Menu
-- ✅ Product Search Functionality
-- ✅ Multiple Sorting Options
-- ✅ Interactive Product Modals
-- ✅ Shopping Cart with Counter
-- ✅ Modern Glassmorphism Design
-- ✅ Mobile-First Responsive Layout
-- ✅Used multiline comment for better understanding
+- ✅Fixed Bootstrap Navbar with brand + links: Home, Products, Cart (with live count)
 
-## 🛠️ Technologies Used
+- ✅Trally cart icon from navbar shows the added item with price and removed button and also display total cart amount.
 
-- **HTML5** - Semantic structure
-- **CSS3** - Modern styling with animations
-- **JavaScript (ES6)** - Interactive functionality
-- **CSS Grid & Flexbox** - Responsive layouts
-- **CSS Variables** - Theme consistency
+- ✅Responsive Product Grid using Bootstrap grid + cards
 
-## 📁 File Structure
+- ✅Search (live filter) — case-insensitive, filters as you type
+
+- ✅Sorting options (e.g., by price/name) (optional toggle provided in UI)
+
+- ✅Add to Cart — updates 🛒 counter in navbar
+
+- ✅Remove Product — smooth fade-out animation (jQuery)
+
+- ✅Product Modal — extra details on image click (Bootstrap Modal, optional)
+
+- ✅AJAX Loading — fetches from products.json
+
+- ✅Glassmorphism polish + subtle hover effects
+
+- ✅Multiline comments throughout HTML/CSS/JS for easy understanding
+
+🧰 Tech Stack
+
+- ✅HTML5 for semantic structure
+
+- ✅Bootstrap 5 (Navbar, Grid, Cards, Buttons, Modal)
+
+- ✅CSS3 (variables, transitions, hover effects)
+
+- ✅JavaScript (ES6) + jQuery (events, filtering, animations, AJAX)

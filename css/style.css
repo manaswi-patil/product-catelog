@@ -1970,7 +1970,7 @@ function filterByCategory(category) {
   currentPage = 1;
   showAllProducts = false;
   
-  // Update active state
+  
   $('.category-filter').removeClass('active');
   $(`.category-filter[data-category="${category}"]`).addClass('active');
   
@@ -1981,7 +1981,6 @@ function filterByCategory(category) {
     filteredProducts = products.filter(p => p.category === category);
   }
   
-  // Apply search filter if exists
   const searchTerm = $("#searchInput").val().toLowerCase();
   if (searchTerm) {
     filteredProducts = filteredProducts.filter(
@@ -2018,7 +2017,6 @@ function setupPagination(totalProducts, currentPage, productsPerPage) {
       <ul class="pagination justify-content-center">
   `;
 
-  // Previous button
   paginationHTML += `
     <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
       <button class="page-link" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
@@ -2027,7 +2025,6 @@ function setupPagination(totalProducts, currentPage, productsPerPage) {
     </li>
   `;
 
-  // Page numbers
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
       paginationHTML += `
@@ -2093,7 +2090,6 @@ function displayProducts(productsToShow) {
   let productsToDisplay = productsToShow;
   let showViewAllButton = false;
 
-  // Handle pagination for different categories
   if (selectedCategory === 'all') {
     // For "All Products" - always show pagination
     productsToDisplay = getPaginatedProducts(productsToShow, currentPage, productsPerPage);
@@ -3846,7 +3842,6 @@ $(document).ready(() => init());
   -webkit-text-fill-color: #000000 !important;
 }
 
-/* ... existing code continues ... */
 
 /* =========================================================
    Enhanced Beautiful Navbar
@@ -4303,7 +4298,6 @@ $(document).ready(() => init());
   padding: 0.875rem 1.25rem;
 }
 
-/* ... existing code continues ... */
 
 /* Product cards: darker, clearer text when not hovered */
 .product-card .card:not(:hover) .product-name {
