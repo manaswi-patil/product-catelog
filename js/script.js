@@ -1,107 +1,47 @@
 /* =========================================================
-   Product Data
+   Product Catalog - Assignment Requirements Implementation
 ========================================================= */
-const products = [
-  {
-    id: 1,
-    name: "Dabur Amla Hair Oil",
-    price: 89,
-    description:
-      "Natural amla hair oil for strong, healthy hair with traditional Ayurvedic formula.",
-    image: "images/img1.jpg",
-    specifications: "200ml, Natural ingredients, No chemicals",
-    brand: "Dabur",
-    category: "Hair Oil",
-  },
-  {
-    id: 2,
-    name: "Bajaj Almond Drops",
-    price: 120,
-    description:
-      "Pure almond oil enriched with vitamins for hair growth and scalp nourishment.",
-    image: "images/img2.jpg",
-    specifications: "100ml, Pure almond extract, Vitamin E enriched",
-    brand: "Bajaj",
-    category: "Hair Oil",
-  },
-  {
-    id: 3,
-    name: "Parachute Coconut Oil",
-    price: 75,
-    description:
-      "Pure coconut oil for deep hair conditioning and natural hair care.",
-    image: "images/img3.jpg",
-    specifications: "300ml, 100% pure coconut oil, Cold pressed",
-    brand: "Parachute",
-    category: "Hair Oil",
-  },
-  {
-    id: 4,
-    name: "Himalaya Herbals Hair Oil",
-    price: 95,
-    description:
-      "Herbal hair oil with natural ingredients for hair fall control and growth.",
-    image: "images/img4.jpg",
-    specifications: "150ml, Herbal formula, Ayurvedic ingredients",
-    brand: "Himalaya",
-    category: "Hair Oil",
-  },
-  {
-    id: 5,
-    name: "Khadi Natural Hair Oil",
-    price: 110,
-    description:
-      "Organic hair oil with natural herbs for hair strengthening and shine.",
-    image: "images/img5.jpg",
-    specifications: "100ml, Organic certified, Natural herbs",
-    brand: "Khadi",
-    category: "Hair Oil",
-  },
-  {
-    id: 6,
-    name: "Indulekha Bringha Hair Oil",
-    price: 180,
-    description:
-      "Ayurvedic hair oil with bringharaj for hair growth and scalp health.",
-    image: "images/img6.jpg",
-    specifications: "100ml, Ayurvedic formula, Bringharaj extract",
-    brand: "Indulekha",
-    category: "Hair Oil",
-  },
-  {
-    id: 7,
-    name: "Khadi Natural Hair Oil",
-    price: 110,
-    description:
-      "Organic hair oil with natural herbs for hair strengthening and shine.",
-    image: "images/img2.jpg",
-    specifications: "100ml, Organic certified, Natural herbs",
-    brand: "Khadi",
-    category: "Hair Oil",
-  },
-  {
-    id: 8,
-    name: "Indulekha Bringha Hair Oil",
-    price: 180,
-    description:
-      "Ayurvedic hair oil with bringharaj for hair growth and scalp health.",
-    image: "images/img1.jpg",
-    specifications: "100ml, Ayurvedic formula, Bringharaj extract",
-    brand: "Indulekha",
-    category: "Hair Oil",
-  },
-];
 
+// Global variables
+let products = [];
 let cartItems = new Map(); // Stores product ID & quantity
-let filteredProducts = [...products];
+let filteredProducts = [];
+let currentProductId = null;
+let selectedCategory = "all";
+let currentPage = 1;
+let productsPerPage = 8;
+let showAllProducts = false;
 
 /* =========================================================
      Initialization
   ========================================================= */
 function init() {
+  loadProductsFromJSON();
   loadSavedData();
-  displayProducts(products);
   setupEventListeners();
+}
+
+/* =========================================================
+     AJAX Product Loading
+  ========================================================= */
+function loadProductsFromJSON() {
+  fetch("products.json")
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      products = data;
+      filteredProducts = [...products];
+      displayProducts(products);
+      setupCategoryFilter();
+    })
+    .catch((error) => {
+      console.error("Error loading products:", error);
+      showToast("Failed to load products. Please refresh the page.", "error");
+    });
 }
 
 /* =========================================================
@@ -109,7 +49,7 @@ function init() {
   ========================================================= */
 function loadSavedData() {
   try {
-    const savedCartItems = localStorage.getItem("techstore_cart_items");
+    const savedCartItems = localStorage.getItem("haircare_cart_items");
     if (savedCartItems) {
       cartItems = new Map(JSON.parse(savedCartItems));
       updateCartCount();
@@ -122,7 +62,7 @@ function loadSavedData() {
 function saveData() {
   try {
     localStorage.setItem(
-      "techstore_cart_items",
+      "haircare_cart_items",
       JSON.stringify(Array.from(cartItems.entries()))
     );
   } catch (error) {
@@ -142,6 +82,162 @@ function updateCartCount() {
 }
 
 /* =========================================================
+     Category Filter Setup
+  ========================================================= */
+function setupCategoryFilter() {
+  const categories = ["all", ...new Set(products.map((p) => p.category))];
+
+  let categoryHTML = "";
+
+  categories.forEach((category) => {
+    if (category === "all") {
+      const productCount = products.length;
+      categoryHTML += `
+        <li>
+          <a class="dropdown-item category-option active" href="#" data-category="${category}">
+            <i class="fas fa-th-large me-2"></i>All Categories
+            <span class="badge bg-primary ms-auto">${productCount}</span>
+          </a>
+        </li>
+      `;
+    } else {
+      const productCount = products.filter(
+        (p) => p.category === category
+      ).length;
+      categoryHTML += `
+        <li>
+          <a class="dropdown-item category-option" href="#" data-category="${category}">
+            <i class="fas fa-tag me-2"></i>${category}
+            <span class="badge bg-secondary ms-auto">${productCount}</span>
+          </a>
+        </li>
+      `;
+    }
+  });
+
+  // Insert after the divider
+  $(".category-dropdown-menu .dropdown-divider").after(categoryHTML);
+}
+
+function filterByCategory(category) {
+  selectedCategory = category;
+  currentPage = 1;
+  showAllProducts = false;
+
+  // Update active state in dropdown
+  $(".category-option").removeClass("active");
+  $(`.category-option[data-category="${category}"]`).addClass("active");
+
+  // Update dropdown button text
+  const categoryText = category === "all" ? "All Categories" : category;
+  $("#selectedCategoryText").text(categoryText);
+
+  // Apply category filter
+  if (category === "all") {
+    filteredProducts = [...products];
+  } else {
+    filteredProducts = products.filter((p) => p.category === category);
+  }
+
+  // Apply search filter if exists
+  const searchTerm = $("#searchInput").val().toLowerCase();
+  if (searchTerm) {
+    filteredProducts = filteredProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm) ||
+        p.description.toLowerCase().includes(searchTerm) ||
+        p.brand.toLowerCase().includes(searchTerm) ||
+        p.specifications.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  displayProducts(filteredProducts);
+}
+
+/* =========================================================
+     Pagination Functions
+  ========================================================= */
+function getPaginatedProducts(products, page, perPage) {
+  const startIndex = (page - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  return products.slice(startIndex, endIndex);
+}
+
+function setupPagination(totalProducts, currentPage, productsPerPage) {
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
+
+  if (totalPages <= 1) {
+    $("#paginationContainer").html("");
+    return;
+  }
+
+  let paginationHTML = `
+    <nav aria-label="Product pagination" class="mt-4">
+      <ul class="pagination justify-content-center">
+  `;
+
+  // Previous button
+  paginationHTML += `
+    <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+      <button class="page-link" onclick="changePage(${currentPage - 1})" ${
+    currentPage === 1 ? "disabled" : ""
+  }>
+        <i class="fas fa-chevron-left"></i> Previous
+      </button>
+    </li>
+  `;
+
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    if (
+      i === 1 ||
+      i === totalPages ||
+      (i >= currentPage - 2 && i <= currentPage + 2)
+    ) {
+      paginationHTML += `
+        <li class="page-item ${i === currentPage ? "active" : ""}">
+          <button class="page-link" onclick="changePage(${i})">${i}</button>
+        </li>
+      `;
+    } else if (i === currentPage - 3 || i === currentPage + 3) {
+      paginationHTML += `
+        <li class="page-item disabled">
+          <span class="page-link">...</span>
+        </li>
+      `;
+    }
+  }
+
+  // Next button
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+      <button class="page-link" onclick="changePage(${currentPage + 1})" ${
+    currentPage === totalPages ? "disabled" : ""
+  }>
+        Next <i class="fas fa-chevron-right"></i>
+      </button>
+    </li>
+  `;
+
+  paginationHTML += `
+      </ul>
+    </nav>
+  `;
+
+  $("#paginationContainer").html(paginationHTML);
+}
+
+function changePage(page) {
+  currentPage = page;
+  displayProducts(filteredProducts);
+}
+
+function showAllProductsInCategory() {
+  showAllProducts = true;
+  displayProducts(filteredProducts);
+}
+
+/* =========================================================
      Product Display
   ========================================================= */
 function displayProducts(productsToShow) {
@@ -152,67 +248,117 @@ function displayProducts(productsToShow) {
         <div class="col-12">
           <div class="text-center py-5 text-muted">
             <h5>No products found</h5>
-            <p>Try adjusting your search criteria</p>
+            <p>Try adjusting your search criteria or category selection</p>
           </div>
         </div>
       `);
+    $("#paginationContainer").html("");
     return;
   }
 
-  const productsHTML = productsToShow
+  let productsToDisplay = productsToShow;
+  let showViewAllButton = false;
+
+  // Handle pagination for different categories
+  if (selectedCategory === "all") {
+    // For "All Products" - always show pagination
+    productsToDisplay = getPaginatedProducts(
+      productsToShow,
+      currentPage,
+      productsPerPage
+    );
+    setupPagination(productsToShow.length, currentPage, productsPerPage);
+  } else {
+    // For specific categories - show limited products initially
+    if (!showAllProducts && productsToShow.length > 8) {
+      productsToDisplay = productsToShow.slice(0, 8);
+      showViewAllButton = true;
+      $("#paginationContainer").html("");
+    } else {
+      showAllProducts = true;
+      productsToDisplay = productsToShow;
+      $("#paginationContainer").html("");
+    }
+  }
+
+  const productsHTML = productsToDisplay
     .map((product) => {
-      const isInCart = cartItems.has(product.id);
+      // compute values (place above the template for each product)
+      const mrp = product.mrp ?? Math.round(product.price / 0.85);
+      const discountPercent =
+        product.discountPercent ??
+        Math.round(((mrp - product.price) / mrp) * 100);
+      const discountedPrice = product.price;
+      const youSave = mrp - discountedPrice;
+
       return `
-          <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-card" data-product-id="${
-            product.id
-          }">
-            <div class="card h-100">
-              <div class=" position-relative">
-                <div class="product-category">${product.category}</div>
-                <button class="wishlist-icon" onclick="toggleWishlist(${
-                  product.id
-                })" title="Add to wishlist">🤍</button>
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-card" data-product-id="${
+          product.id
+        }">
+          <div class="card h-100">
+            <div class="position-relative">
+            </div>
+            
+            <div class="card-body d-flex flex-column text-start">
+              <div class="text-center mb-3">
+                <div class="cart-item-image me-0">
+                  <img src="${product.image}" alt="${product.name}" 
+                       class="rounded bg-light" 
+                       style="width: 60px; height: 60px; object-fit: cover;">
+                </div>
               </div>
+
+              <!-- Name + Discounted Price (same line) -->
+              <div class="w-100 mb-1">
+                <h6 class="product-name mb-1">${product.name}</h6>
+              </div>
+
+              <!-- Discount info first (MRP + % OFF + you save) -->
+              <div class="w-100 mb-2 text-start">
+                <small class="text-muted">
+                  <span class="text-decoration-line-through me-2">₹${mrp}</span>
+                  <span class="badge bg-success me-2">${discountPercent}% OFF</span>
+                  <span>You save ₹${youSave}</span>
+                </small>
+              </div>
+
+              <!-- Current price below discount -->
+              <div class="w-100 mb-3 text-start">
+                <div class="h6 mb-0 fw-bold">₹${discountedPrice}</div>
+              </div>
+
+              <!-- Description -->
+              <p class="card-text product-description flex-grow-1">${
+                product.description
+              }</p>
               
-              <div class="card-body d-flex flex-column text-center">
-                <div class="text-center mb-4">
-                
-                    <div class="cart-item-image me-3">
-    <img src="${product.image}" alt="${product.name}" 
-         class="rounded bg-light" 
-         style="width: 60px; height: 60px; object-fit: cover;">
-  </div>
-                </div>
-                
-                <h6 class="card-title product-name">${product.name}</h6>
-                <div class="product-price h5 mb-3">₹${product.price}</div>
-                <p class="card-text product-description flex-grow-1">${
-                  product.description
-                }</p>
-                
-                <div class="product-actions mt-auto">
-                  ${
-                    isInCart
-                      ? `<button class="btn btn-primary btn-sm w-100 remove-from-cart added" data-product-id="${product.id}">Remove from Cart</button>`
-                      : `<button class="btn btn-primary btn-sm w-100 add-to-cart" data-product-id="${product.id}">Add to Cart</button>`
-                  }
-                </div>
+              <!-- Actions -->
+              <div class="product-actions mt-auto">
+                ${
+                  cartItems.has(product.id)
+                    ? `<button class="btn btn-primary btn-sm w-100 remove-from-cart added" data-product-id="${product.id}">Remove from Cart</button>`
+                    : `<button class="btn btn-primary btn-sm w-100 add-to-cart" data-product-id="${product.id}">Add to Cart</button>`
+                }
               </div>
             </div>
           </div>
-        `;
+        </div>
+      `;
     })
     .join("");
 
   grid.html(productsHTML);
-}
 
-/* =========================================================
-     Wishlist
-  ========================================================= */
-function toggleWishlist(productId) {
-  const product = products.find((p) => p.id === productId);
-  if (product) showToast(`${product.name} added to wishlist!`, "success");
+  // Add "View All" button for specific categories
+  if (showViewAllButton) {
+    grid.append(`
+      <div class="col-12 text-center mt-4">
+        <button class="btn btn-outline-primary btn-lg" onclick="showAllProductsInCategory()">
+          <i class="fas fa-eye me-2"></i>View All ${productsToShow.length} Products
+        </button>
+      </div>
+    `);
+  }
 }
 
 /* =========================================================
@@ -235,33 +381,213 @@ function removeFromCart(productId) {
   const product = products.find((p) => p.id === productId);
   if (!product) return;
 
-  const currentQuantity = cartItems.get(productId) || 0;
-  currentQuantity > 1
-    ? cartItems.set(productId, currentQuantity - 1)
-    : cartItems.delete(productId);
+  // Find the product card element
+  const productCard = $(`.product-card[data-product-id="${productId}"]`);
 
-  updateCartCount();
-  displayProducts(filteredProducts);
-  saveData();
-  showToast(`Removed ${product.name} from cart!`, "info");
+  // Add fade-out animation
+  productCard.addClass("fade-out");
+
+  // Remove from cart after animation
+  setTimeout(() => {
+    cartItems.delete(productId);
+    updateCartCount();
+    displayProducts(filteredProducts);
+    saveData();
+    showToast(`Removed ${product.name} from cart!`, "info");
+  }, 500);
 }
 
 /* =========================================================
-     Search
+     Search Functions
   ========================================================= */
 function filterProducts() {
   const searchTerm = $("#searchInput").val().toLowerCase();
 
-  filteredProducts = products.filter(
+  // Start with category filter
+  let baseProducts =
+    selectedCategory === "all"
+      ? products
+      : products.filter((p) => p.category === selectedCategory);
+
+  // Apply search filter
+  filteredProducts = baseProducts.filter(
     (p) =>
       p.name.toLowerCase().includes(searchTerm) ||
       p.description.toLowerCase().includes(searchTerm) ||
       p.brand.toLowerCase().includes(searchTerm) ||
-      p.category.toLowerCase().includes(searchTerm) ||
       p.specifications.toLowerCase().includes(searchTerm)
   );
 
+  // Reset pagination for search
+  currentPage = 1;
+  showAllProducts = false;
+
+  // Show/hide search suggestions
+  if (searchTerm.length > 0) {
+    showSearchSuggestions(searchTerm);
+  } else {
+    hideSearchSuggestions();
+  }
+
   displayProducts(filteredProducts);
+}
+
+function showSearchSuggestions(searchTerm) {
+  const suggestions = [];
+
+  // Get unique suggestions from products
+  const allSuggestions = new Set();
+
+  products.forEach((product) => {
+    if (product.name.toLowerCase().includes(searchTerm)) {
+      allSuggestions.add(product.name);
+    }
+    if (product.brand.toLowerCase().includes(searchTerm)) {
+      allSuggestions.add(product.brand);
+    }
+    if (product.category.toLowerCase().includes(searchTerm)) {
+      allSuggestions.add(product.category);
+    }
+  });
+
+  // Convert to array and limit results
+  const suggestionArray = Array.from(allSuggestions).slice(0, 5);
+
+  if (suggestionArray.length > 0) {
+    let suggestionsHTML = "";
+
+    suggestionArray.forEach((suggestion) => {
+      const icon = getSuggestionIcon(suggestion);
+      suggestionsHTML += `
+        <div class="suggestion-item" onclick="selectSuggestion('${suggestion}')">
+          <div class="suggestion-icon">
+            <i class="${icon}"></i>
+          </div>
+          <div class="suggestion-text">
+            <div class="suggestion-title">${suggestion}</div>
+            <div class="suggestion-subtitle">Click to search</div>
+          </div>
+        </div>
+      `;
+    });
+
+    $("#searchSuggestions").html(suggestionsHTML).addClass("show");
+  } else {
+    hideSearchSuggestions();
+  }
+}
+
+function hideSearchSuggestions() {
+  $("#searchSuggestions").removeClass("show");
+}
+
+function selectSuggestion(suggestion) {
+  $("#searchInput").val(suggestion);
+  hideSearchSuggestions();
+  filterProducts();
+
+  // Add visual feedback
+  const searchInput = $("#searchInput");
+  searchInput.focus();
+
+  showToast(`Searching for "${suggestion}"`, "info");
+}
+
+function getSuggestionIcon(suggestion) {
+  // Determine icon based on suggestion type
+  if (products.some((p) => p.name === suggestion)) {
+    return "fas fa-tag";
+  } else if (products.some((p) => p.brand === suggestion)) {
+    return "fas fa-crown";
+  } else if (products.some((p) => p.category === suggestion)) {
+    return "fas fa-layer-group";
+  }
+  return "fas fa-search";
+}
+
+function performSearch() {
+  const searchTerm = $("#searchInput").val().trim();
+
+  if (searchTerm) {
+    // Add loading state
+    $(".search-wrapper").addClass("loading");
+
+    setTimeout(() => {
+      $(".search-wrapper").removeClass("loading");
+      filterProducts();
+
+      // Show toast notification
+      showToast(`Searching for "${searchTerm}"...`, "info");
+
+      // Hide suggestions
+      hideSearchSuggestions();
+    }, 800);
+  } else {
+    showToast("Please enter a search term", "error");
+  }
+}
+
+function clearSearch() {
+  $("#searchInput").val("");
+  hideSearchSuggestions();
+  filterProducts();
+
+  // Add visual feedback
+  const searchInput = $("#searchInput");
+  searchInput.focus();
+
+  // Show toast notification
+  showToast("Search cleared", "info");
+}
+
+/* =========================================================
+     Product Detail Modal
+  ========================================================= */
+function showProductDetails(productId) {
+  const product = products.find((p) => p.id === productId);
+  if (!product) return;
+
+  currentProductId = productId;
+
+  const modalContent = `
+    <div class="row">
+      <div class="col-md-6">
+        <img src="${product.image}" alt="${product.name}" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
+      </div>
+      <div class="col-md-6">
+        <h4 class="mb-3">${product.name}</h4>
+        <div class="product-price h3 mb-3">₹${product.price}</div>
+        <p class="mb-3">${product.description}</p>
+        
+        <div class="mb-3">
+          <strong>Brand:</strong> ${product.brand}
+        </div>
+        <div class="mb-3">
+          <strong>Category:</strong> ${product.category}
+        </div>
+        <div class="mb-3">
+          <strong>Specifications:</strong> ${product.specifications}
+        </div>
+        <div class="mb-3">
+          <strong>Ingredients:</strong> ${product.ingredients}
+        </div>
+        <div class="mb-3">
+          <strong>Benefits:</strong> ${product.benefits}
+        </div>
+      </div>
+    </div>
+  `;
+
+  $("#productDetailContent").html(modalContent);
+
+  // Update modal title
+  $("#productDetailModalLabel").text(product.name);
+
+  // Show modal
+  const modal = new bootstrap.Modal(
+    document.getElementById("productDetailModal")
+  );
+  modal.show();
 }
 
 /* =========================================================
@@ -287,6 +613,78 @@ function showToast(message, type = "success") {
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
     },
   }).showToast();
+}
+
+/* =========================================================
+     Cart Modal Functions
+  ========================================================= */
+function openCartModal() {
+  const modal = new bootstrap.Modal(document.getElementById("cartModal"));
+  modal.show();
+  displayCartItems();
+}
+
+function displayCartItems() {
+  const cartItemsList = $("#cartItemsList");
+
+  if (cartItems.size === 0) {
+    cartItemsList.html(`
+      <div class="text-center py-4">
+        <p class="text-muted">Your cart is empty</p>
+      </div>
+    `);
+    return;
+  }
+
+  let cartHTML = "";
+  let totalPrice = 0;
+
+  cartItems.forEach((quantity, productId) => {
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      const itemTotal = product.price * quantity;
+      totalPrice += itemTotal;
+
+      cartHTML += `
+        <div class="cart-item d-flex align-items-center">
+          <div class="cart-item-image me-3">
+            <img src="${product.image}" alt="${product.name}" 
+                 class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+          </div>
+          <div class="cart-item-details flex-grow-1">
+            <div class="cart-item-name">${product.name}</div>
+            <div class="cart-item-price">₹${product.price} × ${quantity}</div>
+          </div>
+          <div class="cart-item-total me-3">₹${itemTotal}</div>
+          <div class="cart-item-actions">
+            <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${productId})">
+              Remove
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  cartItemsList.html(cartHTML);
+  $(".cart-total-price").text(`₹${totalPrice}`);
+  $(".cart-total-count").text(
+    Array.from(cartItems.values()).reduce((sum, qty) => sum + qty, 0)
+  );
+}
+
+function clearCart() {
+  cartItems.clear();
+  updateCartCount();
+  displayProducts(filteredProducts);
+  saveData();
+  showToast("Cart cleared successfully!", "success");
+
+  // Close modal
+  const modal = bootstrap.Modal.getInstance(
+    document.getElementById("cartModal")
+  );
+  if (modal) modal.hide();
 }
 
 /* =========================================================
@@ -381,10 +779,157 @@ function setupFooterAnimations() {
 }
 
 /* =========================================================
+     Category Modal Functions
+  ========================================================= */
+function openCategoryModal() {
+  const modal = new bootstrap.Modal(document.getElementById("categoryModal"));
+  modal.show();
+  setupCategoryModal();
+}
+
+function setupCategoryModal() {
+  const categories = [...new Set(products.map((p) => p.category))];
+  const categoryGrid = $("#categoryGrid");
+
+  let categoryHTML = "";
+
+  categories.forEach((category) => {
+    const productCount = products.filter((p) => p.category === category).length;
+    const isActive = category === selectedCategory ? "active" : "";
+
+    categoryHTML += `
+      <div class="category-card ${isActive}" onclick="selectCategory('${category}')">
+        <div class="category-icon">
+          <i class="fas fa-tag"></i>
+        </div>
+        <div class="category-info">
+          <h6 class="category-name">${category}</h6>
+          <p class="category-count">${productCount} Products</p>
+        </div>
+        <div class="category-badge">
+          <span class="badge bg-secondary">${productCount}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  categoryGrid.html(categoryHTML);
+
+  // Update All Categories count
+  $(".all-categories .category-count").text(`${products.length} Products`);
+}
+
+function selectCategory(category) {
+  // Remove active class from all cards
+  $(".category-card").removeClass("active");
+
+  // Add active class to selected card
+  if (category === "all") {
+    $(".all-categories").addClass("active");
+  } else {
+    $(`.category-card:contains('${category}')`).addClass("active");
+  }
+
+  // Store selected category temporarily
+  tempSelectedCategory = category;
+}
+
+function applyCategoryFilter() {
+  if (tempSelectedCategory) {
+    filterByCategory(tempSelectedCategory);
+
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById("categoryModal")
+    );
+    if (modal) modal.hide();
+
+    // Show toast notification
+    const categoryText =
+      tempSelectedCategory === "all" ? "All Categories" : tempSelectedCategory;
+    showToast(`Filtered by: ${categoryText}`, "success");
+  }
+}
+
+/* =========================================================
+     Category Filter Functions
+  ========================================================= */
+function filterByCategory(category) {
+  selectedCategory = category;
+  currentPage = 1;
+  showAllProducts = false;
+
+  // Update button text
+  const categoryText = category === "all" ? "All Categories" : category;
+  $("#selectedCategoryText").text(categoryText);
+
+  // Apply category filter
+  if (category === "all") {
+    filteredProducts = [...products];
+  } else {
+    filteredProducts = products.filter((p) => p.category === category);
+  }
+
+  // Apply search filter if exists
+  const searchTerm = $("#searchInput").val().toLowerCase();
+  if (searchTerm) {
+    filteredProducts = filteredProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm) ||
+        p.description.toLowerCase().includes(searchTerm) ||
+        p.brand.toLowerCase().includes(searchTerm) ||
+        p.specifications.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  displayProducts(filteredProducts);
+}
+
+/* =========================================================
+     Navbar Scroll Effect
+  ========================================================= */
+function setupNavbarScroll() {
+  const navbar = $(".navbar-glass");
+
+  $(window).on("scroll", function () {
+    if ($(this).scrollTop() > 50) {
+      navbar.addClass("scrolled");
+    } else {
+      navbar.removeClass("scrolled");
+    }
+  });
+}
+
+/* =========================================================
      Event Listeners
   ========================================================= */
 function setupEventListeners() {
   $("#searchInput").on("input", filterProducts);
+
+  // Add Enter key support for search
+  $("#searchInput").on("keypress", function (e) {
+    if (e.which === 13) {
+      // Enter key
+      e.preventDefault();
+      performSearch();
+    }
+  });
+
+  // Hide suggestions when clicking outside
+  $(document).on("click", function (e) {
+    if (!$(e.target).closest(".search-container").length) {
+      hideSearchSuggestions();
+    }
+  });
+
+  // Focus effects
+  $("#searchInput").on("focus", function () {
+    $(this).closest(".search-wrapper").addClass("focused");
+  });
+
+  $("#searchInput").on("blur", function () {
+    $(this).closest(".search-wrapper").removeClass("focused");
+  });
 
   $("#productsGrid").on("click", ".add-to-cart", function () {
     addToCart(parseInt($(this).data("product-id")));
@@ -394,82 +939,30 @@ function setupEventListeners() {
     removeFromCart(parseInt($(this).data("product-id")));
   });
 
+  // Product detail modal add to cart
+  $("#modalAddToCart").on("click", function () {
+    if (currentProductId) {
+      addToCart(currentProductId);
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById("productDetailModal")
+      );
+      if (modal) modal.hide();
+    }
+  });
+
   // Footer event listeners
   setupNewsletterForm();
   setupBackToTop();
   setupFooterLinks();
   setupFooterAnimations();
+
+  // Navbar scroll effect
+  setupNavbarScroll();
 }
 
-/* =========================================================
-     Cart Modal Functions
-  ========================================================= */
-function openCartModal() {
-  const modal = new bootstrap.Modal(document.getElementById("cartModal"));
-  modal.show();
-  displayCartItems();
-}
-
-function displayCartItems() {
-  const cartItemsList = $("#cartItemsList");
-
-  if (cartItems.size === 0) {
-    cartItemsList.html(`
-      <div class="text-center py-4">
-        <p class="text-muted">Your cart is empty</p>
-      </div>
-    `);
-    return;
-  }
-
-  let cartHTML = "";
-  let totalPrice = 0;
-
-  cartItems.forEach((quantity, productId) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      const itemTotal = product.price * quantity;
-      totalPrice += itemTotal;
-
-      cartHTML += `
-        <div class="cart-item d-flex align-items-center">
-          <div class="cart-item-image me-3">
-            <img src="${product.image}" alt="${product.name}" 
-                 class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
-          </div>
-          <div class="cart-item-details flex-grow-1">
-            <div class="cart-item-name">${product.name}</div>
-            <div class="cart-item-price">₹${product.price} × ${quantity}</div>
-          </div>
-          <div class="cart-item-total me-3">₹${itemTotal}</div>
-          <div class="cart-item-actions">
-            <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${productId})">
-              Remove
-            </button>
-          </div>
-        </div>
-      `;
-    }
-  });
-
-  cartItemsList.html(cartHTML);
-  $(".cart-total-price").text(`₹${totalPrice}`);
-  $(".cart-total-count").text(cartItems.size);
-}
-
-function clearCart() {
-  cartItems.clear();
-  updateCartCount();
-  displayProducts(filteredProducts);
-  saveData();
-  showToast("Cart cleared successfully!", "success");
-
-  // Close modal
-  const modal = bootstrap.Modal.getInstance(
-    document.getElementById("cartModal")
-  );
-  if (modal) modal.hide();
-}
+// Global variable for temporary category selection
+let tempSelectedCategory = "all";
 
 /* =========================================================
      Init on DOM Ready
