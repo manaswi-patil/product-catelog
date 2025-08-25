@@ -301,10 +301,12 @@ function displayProducts(productsToShow) {
             
             <div class="card-body d-flex flex-column text-start">
               <div class="text-center mb-3">
-                <div class="cart-item-image me-0">
-                  <img src="${product.image}" alt="${product.name}" 
-                       class="rounded bg-light" 
-                       style="width: 60px; height: 60px; object-fit: cover;">
+                <div class="cart-item-image me-0 product-image-clickable" data-product-id="${
+                  product.id
+                }" title="View details" style="cursor:pointer;">
+                  <img src="${product.image}" alt="${
+        product.name
+      }" class="rounded bg-light" style="width: 60px; height: 60px; object-fit: cover;">
                 </div>
               </div>
 
@@ -543,51 +545,57 @@ function clearSearch() {
 /* =========================================================
      Product Detail Modal
   ========================================================= */
+function renderProductDetailFooter(id) {
+  const inCart = cartItems.has(Number(id));
+  $("#productDetailFooter").html(`
+    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+    ${
+      inCart
+        ? `<button type="button" class="btn btn-outline-danger modal-remove-from-cart" data-product-id="${id}">Remove from Cart</button>`
+        : `<button type="button" class="btn btn-add-to-cart modal-add-to-cart" data-product-id="${id}">Add to Cart</button>`
+    }
+  `);
+}
+
 function showProductDetails(productId) {
-  const product = products.find((p) => p.id === productId);
+  const id = Number(productId);
+  const product = products.find((p) => p.id === id);
   if (!product) return;
 
-  currentProductId = productId;
+  currentProductId = id;
 
-  const modalContent = `
-    <div class="row">
-      <div class="col-md-6">
-        <img src="${product.image}" alt="${product.name}" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
+  const mrp = product.mrp ?? Math.round(product.price / 0.85);
+  const discountPercent =
+    product.discountPercent ?? Math.round(((mrp - product.price) / mrp) * 100);
+
+  $("#productDetailContent").html(`
+    <div class="row g-4">
+      <div class="col-md-5">
+        <img src="${product.image}" alt="${
+    product.name
+  }" class="img-fluid rounded w-100" style="object-fit:cover; max-height:320px;">
       </div>
-      <div class="col-md-6">
-        <h4 class="mb-3">${product.name}</h4>
-        <div class="product-price h3 mb-3">₹${product.price}</div>
-        <p class="mb-3">${product.description}</p>
-        
-        <div class="mb-3">
-          <strong>Brand:</strong> ${product.brand}
+      <div class="col-md-7">
+        <h4 class="mb-2">${product.name}</h4>
+        <div class="d-flex align-items-baseline gap-3 mb-2">
+          <div class="h4 mb-0 fw-bold text-dark">₹${product.price}</div>
+          <small class="text-muted"><span class="text-decoration-line-through">₹${mrp}</span></small>
+          <span class="badge bg-success">${discountPercent}% OFF</span>
         </div>
-        <div class="mb-3">
-          <strong>Category:</strong> ${product.category}
-        </div>
-        <div class="mb-3">
-          <strong>Specifications:</strong> ${product.specifications}
-        </div>
-        <div class="mb-3">
-          <strong>Ingredients:</strong> ${product.ingredients}
-        </div>
-        <div class="mb-3">
-          <strong>Benefits:</strong> ${product.benefits}
-        </div>
+        <p class="text-muted mb-3">${product.description}</p>
+        <div class="mb-2"><strong>Brand:</strong> ${product.brand ?? "-"}</div>
+        <div class="mb-2"><strong>Category:</strong> ${
+          product.category ?? "-"
+        }</div>
+        <div class="mb-2"><strong>Specifications:</strong> ${
+          product.specifications ?? "-"
+        }</div>
       </div>
     </div>
-  `;
+  `);
 
-  $("#productDetailContent").html(modalContent);
-
-  // Update modal title
-  $("#productDetailModalLabel").text(product.name);
-
-  // Show modal
-  const modal = new bootstrap.Modal(
-    document.getElementById("productDetailModal")
-  );
-  modal.show();
+  renderProductDetailFooter(id);
+  new bootstrap.Modal(document.getElementById("productDetailModal")).show();
 }
 
 /* =========================================================
@@ -939,17 +947,39 @@ function setupEventListeners() {
     removeFromCart(parseInt($(this).data("product-id")));
   });
 
-  // Product detail modal add to cart
-  $("#modalAddToCart").on("click", function () {
-    if (currentProductId) {
-      addToCart(currentProductId);
-      // Close modal
+  // Image -> open modal
+  $("#productsGrid").on("click", ".product-image-clickable", function () {
+    const id = Number($(this).data("product-id"));
+    showProductDetails(id);
+  });
+
+  // Modal Add to Cart
+  $("#productDetailModal")
+    .off("click", ".modal-add-to-cart")
+    .on("click", ".modal-add-to-cart", function () {
+      const id = Number($(this).data("product-id") || currentProductId);
+      addToCart(id);
+      updateCartCount();
+      displayProducts(filteredProducts);
       const modal = bootstrap.Modal.getInstance(
         document.getElementById("productDetailModal")
       );
       if (modal) modal.hide();
-    }
-  });
+    });
+
+  // Modal Remove from Cart
+  $("#productDetailModal")
+    .off("click", ".modal-remove-from-cart")
+    .on("click", ".modal-remove-from-cart", function () {
+      const id = Number($(this).data("product-id") || currentProductId);
+      removeFromCart(id);
+      updateCartCount();
+      displayProducts(filteredProducts);
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById("productDetailModal")
+      );
+      if (modal) modal.hide();
+    });
 
   // Footer event listeners
   setupNewsletterForm();
